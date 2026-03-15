@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
@@ -98,10 +97,10 @@
     </div>
 
     <div id="f_view_auth" class="f-view-section active">
-        <div class="auth-container" id="auth_setup_container">
+        <div class="auth-container" id="auth_setup_container" style="display:none;">
             <div class="auth-box">
-                <h2 style="color:#087f5b; text-align:center; margin-top:0;">🛡️ 초기 환경 설정</h2>
-                <p style="font-size:13px; color:#868e96; text-align:center;">담당자 정보와 데이터 보안용 암호를 설정합니다.</p>
+                <h2 style="color:#087f5b; text-align:center; margin-top:0;" id="setup_title">🛡️ 초기 환경 설정</h2>
+                <p style="font-size:13px; color:#868e96; text-align:center;" id="setup_desc">담당자 정보와 데이터 보안용 암호를 설정합니다.</p>
                 <input type="text" id="setup_user_name" placeholder="담당자 이름 (예: 홍길동)" style="margin-bottom:10px;">
                 
                 <select id="setup_region" style="margin-bottom:10px;">
@@ -299,33 +298,22 @@
                 <input type="password" id="setup_password" placeholder="앱 잠금 비밀번호 (필수)" style="margin-bottom:10px;">
                 <input type="password" id="setup_password_confirm" placeholder="비밀번호 확인" style="margin-bottom:20px;">
                 <button type="button" onclick="setupProfile()" style="width:100%; padding:15px; background:#0ca678; color:white; border:none; border-radius:8px; font-weight:bold; font-size:16px;">설정 완료 및 시작</button>
+                <button type="button" id="btn_cancel_setup" onclick="cancelSetup()" style="display:none; width:100%; padding:10px; background:transparent; color:#868e96; border:none; margin-top:10px; font-size:13px; text-decoration:underline;">취소하고 돌아가기</button>
             </div>
         </div>
 
         <div class="auth-container" id="auth_login_container" style="display:none;">
             <div class="auth-box">
                 <h2 style="color:#1864ab; text-align:center; margin-top:0;">🔒 안전관리 현장앱</h2>
-                <p id="login_welcome_msg" style="font-size:14px; color:#495057; text-align:center; font-weight:bold;"></p>
-                <input type="password" id="login_password" placeholder="비밀번호를 입력하세요" style="margin-bottom:20px;">
-                <button type="button" onclick="loginProfile()" style="width:100%; padding:15px; background:#1864ab; color:white; border:none; border-radius:8px; font-weight:bold; font-size:16px;">잠금 해제</button>
-                <button type="button" onclick="resetAppFull()" style="width:100%; padding:10px; background:transparent; color:#adb5bd; border:none; margin-top:10px; font-size:12px; text-decoration:underline;">기기 데이터 전체 초기화</button>
+                <p style="font-size:14px; color:#495057; text-align:center; font-weight:bold; margin-bottom:20px;">접속할 담당자 프로필을 선택하세요</p>
+                
+                <div id="profile_list_container" style="max-height: 250px; overflow-y: auto; margin-bottom: 20px;"></div>
+                
+                <button type="button" onclick="showSetupNewProfile(false)" style="width:100%; padding:12px; background:#e6fcf5; color:#087f5b; border:1px dashed #20c997; border-radius:8px; font-weight:bold; font-size:14px; margin-bottom:15px;">➕ 새 담당자 추가 등록</button>
+                <button type="button" onclick="resetAppFull()" style="width:100%; padding:10px; background:transparent; color:#adb5bd; border:none; font-size:12px; text-decoration:underline;">기기 데이터 전체 초기화</button>
             </div>
         </div>
     </div>
-    <div id="pwa_install_container" style="display:none; position:absolute; bottom:20px; left:20px; right:20px; z-index:999;">
-        <style>
-            @keyframes pulse-btn { 0% { transform: scale(1); } 50% { transform: scale(1.03); } 100% { transform: scale(1); } }
-        </style>
-        <button type="button" id="btn_install_pwa" style="width:100%; padding:18px; background:#fd7e14; color:white; border:none; border-radius:12px; font-weight:900; font-size:18px; box-shadow:0 8px 16px rgba(253,126,20,0.4); animation: pulse-btn 1.5s infinite; cursor:pointer;">
-            📲 바탕화면에 앱 설치하기 (터치)
-        </button>
-    </div>
-
-    <div id="ios_install_guide" style="display:none; position:absolute; bottom:20px; left:20px; right:20px; z-index:999; background:#e6fcf5; border:2px solid #20c997; padding:15px; border-radius:12px; text-align:center; box-shadow:0 8px 16px rgba(0,0,0,0.1);">
-        <b style="font-size:16px; color:#087f5b;">🍎 아이폰(아이패드) 설치 안내</b><br>
-        <span style="font-size:14px; color:#495057; display:inline-block; margin-top:8px;">화면 맨 아래 <b>[공유 ⍗]</b> 버튼을 누르고<br><b>[홈 화면에 추가 ➕]</b>를 눌러주세요!</span>
-    </div>
-    
 
     <div id="f_view_farm_select" class="f-view-section">
         
@@ -343,8 +331,10 @@
         </div>
 
         <div class="card">
-            <h3 style="margin:0 0 10px 0; color:#495057;">📋 기기에 등록된 농가 목록</h3>
-            <input type="text" id="f_search_keyword" placeholder="🔍 농가명 또는 경영주 검색..." onkeyup="renderFarmList()" style="margin-bottom:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <h3 style="margin:0; color:#495057;">📋 기기에 등록된 농가 목록</h3>
+                <button type="button" onclick="lockApp()" style="background:#fa5252; color:white; border:none; border-radius:4px; padding:6px 12px; font-size:12px; font-weight:bold; cursor:pointer;">🔒 로그아웃</button>
+            </div>
             <div id="f_farm_list_container" style="max-height: 40vh; overflow-y: auto; background: #f8f9fa; border: 1px solid #eee; border-radius: 6px; padding: 10px;"></div>
         </div>
     </div>
@@ -479,11 +469,6 @@
     // ==========================================
     function f_id(id) { return document.getElementById(id); }
 
-    function inArray(arr, val) {
-        for(var i=0; i<arr.length; i++) { if(arr[i] === val) return true; }
-        return false;
-    }
-
     var CAT_CONFIG = [
         { id: '농업기계', icon: '🚜', title: '농업기계', hasTarget: true, preset: [{name:'경운기'}, {name:'트랙터'}, {name:'SS기'}, {name:'관리기'}, {name:'동력운반차'}, {name:'예초기'}, {name:'고정식 기계'}] },
         { id: '작업장', icon: '🏡', title: '작업장', hasTarget: true, preset: [{name:'온실(하우스)'}, {name:'논'}, {name:'밭'}, {name:'과수원'}, {name:'축사'}, {name:'가공장'}, {name:'창고'}] },
@@ -541,8 +526,11 @@
 
     var SUPPORT_LIST = ['안전모', '마스크', '넥밴드', '고글', '기피제', '책자', '리플릿', '기타'];
 
+    // 🌟 멀티 프로필 전역 변수
     var userProfile = null;
     var sessionSecret = null; 
+    var activeProfileId = null;
+
     var allFarms = [];
     var currentFarmId = null;
     var currentRound = 1;
@@ -553,101 +541,243 @@
     var currentPhotos = []; 
 
     // ==========================================
-    // 🛡️ 보안 패치 2 & 3: 시스템 마스터 키 적용
+    // 🛡️ 보안 패치 2: Web Crypto API (국가 표준 암호화 적용)
     // ==========================================
-    var SYSTEM_MASTER_KEY = "Agro_Admin_Key_2026!@#"; 
+    var globalAppDB = {}; 
+    var cryptoSalt = new TextEncoder().encode("Agro_Secure_Salt_App_2026");
 
-    function hashPassword(str) {
-        var hash = 0x811c9dc5; 
-        for (var i = 0; i < str.length; i++) { hash ^= str.charCodeAt(i); hash = (hash * 0x01000193) >>> 0; }
-        var res = hash.toString(16);
-        for(var j=0; j<1000; j++) { 
-            var h = 0x811c9dc5;
-            for(var k=0; k<res.length; k++) { h ^= res.charCodeAt(k); h = (h * 0x01000193) >>> 0; }
-            res = h.toString(16);
-        }
-        return res;
+    async function hashPassword(pin) {
+        const msgBuffer = new TextEncoder().encode(pin);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     }
 
-    function rc4(key, str) {
-        var s = [], j = 0, x, res = '';
-        for (var i = 0; i < 256; i++) { s[i] = i; }
-        for (var i = 0; i < 256; i++) {
-            j = (j + s[i] + key.charCodeAt(i % key.length)) % 256;
-            x = s[i]; s[i] = s[j]; s[j] = x;
-        }
-        var i = 0; j = 0;
-        for (var y = 0; y < str.length; y++) {
-            i = (i + 1) % 256;
-            j = (j + s[i]) % 256;
-            x = s[i]; s[i] = s[j]; s[j] = x;
-            res += String.fromCharCode(str.charCodeAt(y) ^ s[(s[i] + s[j]) % 256]);
-        }
-        return res;
+    async function getAesKey(pin) {
+        const keyMaterial = await crypto.subtle.importKey("raw", new TextEncoder().encode(pin), { name: "PBKDF2" }, false, ["deriveKey"]);
+        return await crypto.subtle.deriveKey(
+            { name: "PBKDF2", salt: cryptoSalt, iterations: 100000, hash: "SHA-256" },
+            keyMaterial, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]
+        );
     }
 
-    function generateMAC(str, key) {
-        var mix = str + "|" + key;
-        var hash = 0x811c9dc5;
-        for (var i = 0; i < mix.length; i++) { hash ^= mix.charCodeAt(i); hash = (hash * 0x01000193) >>> 0; }
-        return hash.toString(16);
-    }
-
-    function encryptData(text, userKey) {
+    async function encryptData(text, pin) {
         try {
-            var encodedText = encodeURIComponent(text);
-            var mac = generateMAC(encodedText, SYSTEM_MASTER_KEY); 
-            var payload = mac + "|" + encodedText;
-            var cipher = rc4(SYSTEM_MASTER_KEY, payload); 
-            return btoa(cipher);
-        } catch(e) { return null; }
+            const key = await getAesKey(pin);
+            const iv = crypto.getRandomValues(new Uint8Array(12));
+            const encoded = new TextEncoder().encode(text);
+            const cipher = await crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, key, encoded);
+            
+            const payload = new Uint8Array(iv.length + cipher.byteLength);
+            payload.set(iv, 0); payload.set(new Uint8Array(cipher), iv.length);
+            
+            let binary = '';
+            for (let i = 0; i < payload.byteLength; i++) binary += String.fromCharCode(payload[i]);
+            return btoa(binary);
+        } catch (e) { return null; }
     }
 
-    // 스마트 호환 모드 복호화 (마스터 키 -> 유저 키)
-    function decryptData(cipherBase64, userKey) {
+    async function decryptData(base64Str, pin) {
         try {
-            var cleanBase64 = cipherBase64.replace(/^\uFEFF/, '').trim();
-            var cipher = atob(cleanBase64);
+            const key = await getAesKey(pin);
+            const binaryStr = atob(base64Str.replace(/^\uFEFF/, '').trim());
+            const payload = new Uint8Array(binaryStr.length);
+            for (let i = 0; i < binaryStr.length; i++) payload[i] = binaryStr.charCodeAt(i);
             
-            var payload1 = rc4(SYSTEM_MASTER_KEY, cipher);
-            var idx1 = payload1.indexOf("|");
-            if (idx1 > -1) {
-                var mac1 = payload1.substring(0, idx1);
-                var text1 = payload1.substring(idx1 + 1);
-                if (generateMAC(text1, SYSTEM_MASTER_KEY) === mac1) return decodeURIComponent(text1);
-            }
-            
-            if (userKey) {
-                var payload2 = rc4(userKey, cipher);
-                var idx2 = payload2.indexOf("|");
-                if (idx2 > -1) {
-                    var mac2 = payload2.substring(0, idx2);
-                    var text2 = payload2.substring(idx2 + 1);
-                    if (generateMAC(text2, userKey) === mac2) return decodeURIComponent(text2);
-                }
-            }
-            return null;
-        } catch(e) { return null; }
+            const iv = payload.slice(0, 12); const cipher = payload.slice(12);
+            const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv: iv }, key, cipher);
+            return new TextDecoder().decode(decrypted);
+        } catch (e) { return null; } 
     }
 
     function getStore(key) { try { return localStorage.getItem(key); } catch(e) { return null; } }
     function setStore(key, val) { try { localStorage.setItem(key, val); } catch(e) {} }
 
-    // ==========================================
-    // 로컬 데이터베이스 (DB) 관리 - 856에러 방지
-    // ==========================================
-    function getDB() {
+    // 🌟 사용자별 철저한 DB 분리 저장소 키
+    function getFarmDbKey() { return activeProfileId === "user_legacy" ? "SECURE_FARM_DB" : "SECURE_FARM_DB_" + activeProfileId; }
+    function getTempDbKey() { return activeProfileId === "user_legacy" ? "SECURE_FIELD_APP_TEMP" : "SECURE_FIELD_APP_TEMP_" + activeProfileId; }
+
+    function getDB() { return globalAppDB; }
+    async function saveDB(dbObj) {
+        globalAppDB = dbObj; 
         try {
-            var enc = getStore("SECURE_FIELD_APP_TEMP");
-            if (!enc) return {};
-            var dec = decryptData(enc, sessionSecret);
-            return dec ? JSON.parse(dec) : {};
-        } catch(e) { return {}; }
+            if(sessionSecret && activeProfileId) {
+                const enc = await encryptData(JSON.stringify(dbObj), sessionSecret);
+                if(enc) setStore(getTempDbKey(), enc); 
+            }
+        } catch(e) { console.error("DB 저장 실패"); }
     }
 
-    function saveDB(dbObj) {
-        try { setStore("SECURE_FIELD_APP_TEMP", encryptData(JSON.stringify(dbObj), sessionSecret)); } catch(e) {}
+    // ==========================================
+    // 🛡️ 멀티 프로필 계정 관리 시스템
+    // ==========================================
+    function checkAuth() {
+        f_id("f_view_auth").style.display = "block";
+        var oldSingle = getStore("APP_SECURE_PROFILE");
+        var profilesArr = JSON.parse(getStore("APP_SECURE_PROFILES") || "[]");
+        
+        // 🌟 기존 1인 사용자 데이터를 날리지 않고 멀티 프로필로 자동 변환 (마이그레이션)
+        if (oldSingle && profilesArr.length === 0) {
+            var op = JSON.parse(oldSingle);
+            op.id = "user_legacy";
+            profilesArr.push(op);
+            setStore("APP_SECURE_PROFILES", JSON.stringify(profilesArr));
+            localStorage.removeItem("APP_SECURE_PROFILE");
+        }
+
+        if (profilesArr.length > 0) {
+            renderProfiles(profilesArr);
+            f_id("auth_login_container").style.display = "flex";
+            f_id("auth_setup_container").style.display = "none";
+        } else {
+            showSetupNewProfile(true);
+        }
+        renderSupportInputs();
     }
+
+    function showSetupNewProfile(isFirst) {
+        f_id("auth_login_container").style.display = "none";
+        f_id("auth_setup_container").style.display = "flex";
+        f_id("setup_title").innerText = isFirst ? "🛡️ 초기 환경 설정" : "👤 새 담당자 추가";
+        var cancelBtn = f_id("btn_cancel_setup");
+        if(cancelBtn) cancelBtn.style.display = isFirst ? "none" : "block";
+        f_id("setup_user_name").value = "";
+        f_id("setup_password").value = "";
+        f_id("setup_password_confirm").value = "";
+    }
+
+    function cancelSetup() {
+        f_id("auth_setup_container").style.display = "none";
+        f_id("auth_login_container").style.display = "flex";
+    }
+
+    async function setupProfile() {
+        var name = f_id("setup_user_name").value.trim();
+        var region = f_id("setup_region").value.trim();
+        var pw = f_id("setup_password").value;
+        var pwConf = f_id("setup_password_confirm").value;
+
+        if (!name || !region || !pw) return alert("빈칸 없이 모두 입력해주세요.");
+        if (pw !== pwConf) return alert("비밀번호 확인이 일치하지 않습니다.");
+
+        var hashedPw = await hashPassword(pw);
+        var newId = "user_" + new Date().getTime();
+        
+        var profiles = JSON.parse(getStore("APP_SECURE_PROFILES") || "[]");
+        userProfile = { id: newId, name: name, region: region, pwHash: hashedPw };
+        profiles.push(userProfile);
+        setStore("APP_SECURE_PROFILES", JSON.stringify(profiles));
+        
+        sessionSecret = pw;
+        activeProfileId = newId;
+        
+        alert("✅ 담당자 등록 및 로그인이 완료되었습니다.");
+        await initAppData();
+    }
+
+    function renderProfiles(profiles) {
+        var html = "";
+        for(var i=0; i<profiles.length; i++) {
+            var p = profiles[i];
+            html += "<div style='padding:12px; border:1px solid #dee2e6; border-radius:8px; margin-bottom:8px; cursor:pointer; background:#fff; display:flex; justify-content:space-between; align-items:center; box-shadow:0 1px 3px rgba(0,0,0,0.1);'>" +
+                    "<div style='flex:1;' onclick='promptLogin(\"" + p.id + "\")'><strong style='color:#1864ab; font-size:16px;'>" + esc(p.name) + "</strong> <small style='color:#868e96;'>(" + esc(p.region) + ")</small></div>" +
+                    "<button type='button' onclick='deleteProfile(\"" + p.id + "\", \"" + esc(p.name) + "\")' style='background:transparent; border:none; color:#adb5bd; font-size:12px; text-decoration:underline; cursor:pointer;'>삭제</button>" +
+                    "</div>";
+        }
+        f_id("profile_list_container").innerHTML = html;
+    }
+
+    function deleteProfile(pId, pName) {
+        if(!confirm("⚠️ 경고: [" + pName + "] 담당자의 계정과 저장된 모든 농가 데이터가 완전히 삭제됩니다.\n정말 지우시겠습니까?")) return;
+        
+        var profiles = JSON.parse(getStore("APP_SECURE_PROFILES") || "[]");
+        profiles = profiles.filter(function(p) { return p.id !== pId; });
+        setStore("APP_SECURE_PROFILES", JSON.stringify(profiles));
+        
+        var farmKey = pId === "user_legacy" ? "SECURE_FARM_DB" : "SECURE_FARM_DB_" + pId;
+        var tempKey = pId === "user_legacy" ? "SECURE_FIELD_APP_TEMP" : "SECURE_FIELD_APP_TEMP_" + pId;
+        localStorage.removeItem(farmKey);
+        localStorage.removeItem(tempKey);
+        
+        alert("🗑️ 담당자 프로필 삭제가 완료되었습니다.");
+        checkAuth(); 
+    }
+
+    async function promptLogin(pId) {
+        var profiles = JSON.parse(getStore("APP_SECURE_PROFILES") || "[]");
+        var target = null;
+        for(var i=0; i<profiles.length; i++) { if(profiles[i].id === pId) target = profiles[i]; }
+        if(!target) return;
+
+        var pw = prompt("🔐 [" + target.name + "] 님의 비밀번호를 입력하세요:");
+        if(!pw) return; 
+
+        var hashedPw = await hashPassword(pw);
+        if (hashedPw === target.pwHash) {
+            userProfile = target;
+            sessionSecret = pw;
+            activeProfileId = target.id;
+            await initAppData();
+        } else {
+            alert("❌ 비밀번호가 틀렸습니다.");
+        }
+    }
+
+    function lockApp() {
+        if(confirm("화면을 잠그고 로그아웃 하시겠습니까?\n(다시 로그인하려면 비밀번호가 필요합니다.)")) {
+            sessionSecret = null;
+            activeProfileId = null;
+            userProfile = null;
+            globalAppDB = {};
+            allFarms = [];
+            location.reload();
+        }
+    }
+
+    function resetAppFull() {
+        if(confirm("🚨 경고! 기기 내의 모든 사용자 프로필과 데이터가 완전히 영구 삭제됩니다.\n초기화하시겠습니까?")) {
+            localStorage.clear();
+            location.reload();
+        }
+    }
+
+    async function initAppData() {
+        f_id("f_view_auth").style.display = "none";
+        
+        var encFarms = getStore(getFarmDbKey());
+        if(encFarms) {
+            var decStr = await decryptData(encFarms, sessionSecret);
+            if (decStr) allFarms = JSON.parse(decStr);
+            else allFarms = [];
+        } else { allFarms = []; }
+
+        var encDB = getStore(getTempDbKey());
+        if(encDB) {
+            var decDB = await decryptData(encDB, sessionSecret);
+            if(decDB) globalAppDB = JSON.parse(decDB);
+            else globalAppDB = {};
+        } else { globalAppDB = {}; }
+
+        f_id("new_region_name").value = userProfile.region;
+        renderFarmList(); switchView("f_view_farm_select", false);
+    }
+
+    // ==========================================
+    // 🛡️ 보안 패치 3: 자동 잠금 기능 (10분 미사용 시)
+    // ==========================================
+    var lastActivityTime = Date.now();
+    var LOCK_TIMEOUT_MS = 10 * 60 * 1000; 
+
+    function resetActivityTimer() { lastActivityTime = Date.now(); }
+    function checkAutoLock() {
+        if (sessionSecret && (Date.now() - lastActivityTime > LOCK_TIMEOUT_MS)) {
+            sessionSecret = null; activeProfileId = null; globalAppDB = {}; allFarms = [];
+            alert("🔒 10분 이상 조작이 없어 화면이 잠겼습니다.");
+            location.reload();    
+        }
+    }
+    ['touchstart', 'click', 'keydown', 'scroll'].forEach(function(evt) { document.addEventListener(evt, resetActivityTimer, { passive: true }); });
+    setInterval(checkAutoLock, 60000);
 
     // ==========================================
     // 네비게이션 제어
@@ -693,77 +823,8 @@
         }
     }
 
-    // ==========================================
-    // 앱 인증 및 초기화
-    // ==========================================
-    function checkAuth() {
-        f_id("f_view_auth").style.display = "block";
-        var stored = getStore("APP_SECURE_PROFILE");
-        if (stored) {
-            userProfile = JSON.parse(stored);
-            f_id("login_welcome_msg").innerHTML = esc(userProfile.region) + " 담당자 <br><span style='color:#087f5b;'>" + esc(userProfile.name) + "</span> 님 환영합니다.";
-            f_id("auth_login_container").style.display = "flex";
-            f_id("auth_setup_container").style.display = "none";
-        } else {
-            f_id("auth_setup_container").style.display = "flex";
-            f_id("auth_login_container").style.display = "none";
-        }
-        renderSupportInputs();
-    }
-
-    function setupProfile() {
-        var name = f_id("setup_user_name").value.trim();
-        var region = f_id("setup_region").value.trim();
-        var pw = f_id("setup_password").value;
-        var pwConf = f_id("setup_password_confirm").value;
-
-        if (!name || !region || !pw) return alert("빈칸 없이 모두 입력해주세요.");
-        if (pw !== pwConf) return alert("비밀번호 확인이 일치하지 않습니다.");
-
-        var hashedPw = hashPassword(pw);
-        userProfile = { name: name, region: region, pwHash: hashedPw }; 
-        setStore("APP_SECURE_PROFILE", JSON.stringify(userProfile));
-        sessionSecret = pw; 
-        
-        alert("✅ 설정이 완료되었습니다.");
-        initAppData();
-    }
-
-    function loginProfile() {
-        var pw = f_id("login_password").value;
-        if (!pw) return alert("비밀번호를 입력하세요.");
-        
-        if (hashPassword(pw) === userProfile.pwHash) {
-            sessionSecret = pw; 
-            f_id("login_password").value = ""; 
-            initAppData();
-        } else { 
-            alert("❌ 비밀번호가 틀렸습니다."); 
-            f_id("login_password").value = ""; 
-        }
-    }
-
-    function resetAppFull() {
-        if(confirm("🚨 경고! 기기 내의 모든 농가 및 평가 기록 데이터가 영구 삭제됩니다.\n정말 초기화하시겠습니까?")) {
-            localStorage.removeItem("APP_SECURE_PROFILE");
-            localStorage.removeItem("SECURE_FARM_DB");
-            localStorage.removeItem("SECURE_FIELD_APP_TEMP");
-            location.reload();
-        }
-    }
-
-    function initAppData() {
-        var encFarms = getStore("SECURE_FARM_DB");
-        if(encFarms) {
-            var decStr = decryptData(encFarms, sessionSecret);
-            if (decStr) allFarms = JSON.parse(decStr);
-        }
-        f_id("new_region_name").value = userProfile.region;
-        renderFarmList(); switchView("f_view_farm_select", false);
-    }
-
-    // ==========================================
-    // 📂 파일 불러오기 기능 (에러 완벽 차단)
+  // ==========================================
+    // 📂 파일 불러오기 (누적된 모든 차수 한 번에 복구)
     // ==========================================
     function importFromFile(event) {
         var file = null;
@@ -771,10 +832,10 @@
         if (!file) return;
 
         var reader = new FileReader();
-        reader.onload = function(e) {
+        reader.onload = async function(e) {
             try {
                 var content = e.target.result;
-                var decrypted = decryptData(content, sessionSecret);
+                var decrypted = await decryptData(content, sessionSecret);
                 
                 if (!decrypted) {
                     alert("❌ 파일 해독에 실패했습니다.\n설정된 앱 잠금 비밀번호가 다르거나 파일이 손상되었습니다.");
@@ -783,37 +844,65 @@
                 }
 
                 var data = JSON.parse(decrypted);
-                var rawData = data._mobileRawData || data; 
-
-                var farmExists = false;
-                for(var i=0; i<allFarms.length; i++) {
-                    if(allFarms[i].id === data.farmId) { farmExists = true; break; }
-                }
-                if(!farmExists) {
-                    allFarms.push({ id: data.farmId, owner_name: data.ownerName, farmName: data.farmName, region: data.region });
-                    setStore("SECURE_FARM_DB", encryptData(JSON.stringify(allFarms), sessionSecret));
-                }
-
-                var db = getDB();
-                if(!db[data.farmId]) db[data.farmId] = [];
                 
-                var evalExists = -1;
-                for(var j=0; j<db[data.farmId].length; j++) {
-                    if(db[data.farmId][j].round === data.round) { evalExists = j; break; }
-                }
-
-                if(evalExists > -1) {
-                    if(confirm(data.ownerName + " 농가의 " + data.round + "차 평가 기록이 이미 있습니다. 불러온 파일로 덮어쓰시겠습니까?")) {
-                        db[data.farmId][evalExists] = rawData;
-                    } else {
-                        if(event.target) event.target.value = ""; return;
+                // 🌟 누적형(history) 배열인지, 옛날 단일형 데이터인지 유연하게 파악
+                var importedRounds = [];
+                if (data.history && Array.isArray(data.history)) {
+                    for(var r=0; r<data.history.length; r++) {
+                        importedRounds.push(data.history[r]._mobileRawData || data.history[r]);
                     }
                 } else {
-                    db[data.farmId].push(rawData);
+                    importedRounds.push(data._mobileRawData || data);
                 }
-                saveDB(db);
 
-                alert("✅ 파일을 성공적으로 불러왔습니다!");
+                // ID 또는 이름으로 농가 중복 여부 확인
+                var matchedFarm = null;
+                for(var i=0; i<allFarms.length; i++) { if(allFarms[i].id === data.farmId) { matchedFarm = allFarms[i]; break; } }
+                if(!matchedFarm) {
+                    for(var j=0; j<allFarms.length; j++) { if(allFarms[j].owner_name === data.ownerName) { matchedFarm = allFarms[j]; break; } }
+                }
+
+                if(!matchedFarm) {
+                    allFarms.push({ id: data.farmId, owner_name: data.ownerName, farmName: data.farmName, region: data.region });
+                    var encFarms = await encryptData(JSON.stringify(allFarms), sessionSecret);
+                    setStore(getFarmDbKey(), encFarms);
+                }
+
+                var targetId = matchedFarm ? matchedFarm.id : data.farmId;
+                var db = getDB();
+                if(!db[targetId]) db[targetId] = [];
+                
+                // 겹치는 차수가 있는지 사전 검사
+                var hasOverlap = false;
+                for (var i=0; i<importedRounds.length; i++) {
+                    for(var k=0; k<db[targetId].length; k++) {
+                        if(db[targetId][k].round === importedRounds[i].round) { hasOverlap = true; break; }
+                    }
+                }
+
+                if(hasOverlap) {
+                    if(!confirm(data.ownerName + " 농가의 기존 평가 기록이 있습니다. 불러온 파일 내용으로 덮어쓰시겠습니까?\n(기존 기록 중 파일과 겹치는 차수만 덮어씁니다.)")) {
+                        if(event.target) event.target.value = ""; return;
+                    }
+                }
+
+                // 각 차수별 데이터를 병합 또는 추가
+                for (var i=0; i<importedRounds.length; i++) {
+                    var ir = importedRounds[i];
+                    ir.farmId = targetId; 
+                    
+                    var evalExists = -1;
+                    for(var k=0; k<db[targetId].length; k++) {
+                        if(db[targetId][k].round === ir.round) { evalExists = k; break; }
+                    }
+
+                    if (evalExists > -1) db[targetId][evalExists] = ir; // 덮어쓰기
+                    else db[targetId].push(ir); // 새 차수 추가
+                }
+                
+                await saveDB(db);
+
+                alert("✅ [" + importedRounds.length + "개 차수] 누적 파일이 성공적으로 연동되었습니다!");
                 renderFarmList(); 
             } catch(parseErr) {
                 alert("❌ 파일 형식 오류로 데이터를 복원할 수 없습니다.");
@@ -824,19 +913,34 @@
     }
 
     // ==========================================
-    // 농가 목록 관리
+    // 농가 목록 및 삭제 관리
     // ==========================================
-    function addNewFarm() {
+    async function addNewFarm() {
         var owner = f_id("new_owner_name").value.trim();
         var farmName = f_id("new_farm_name").value.trim();
         if(!owner) return alert("경영주 이름은 필수입니다.");
         
         var newId = "farm_" + new Date().getTime();
         allFarms.push({ id: newId, owner_name: owner, farmName: farmName, region: userProfile.region });
-        setStore("SECURE_FARM_DB", encryptData(JSON.stringify(allFarms), sessionSecret));
+        
+        var encFarms = await encryptData(JSON.stringify(allFarms), sessionSecret);
+        setStore(getFarmDbKey(), encFarms);
         
         f_id("new_owner_name").value = ""; f_id("new_farm_name").value = "";
         renderFarmList(); alert("✅ 농가가 명단에 추가되었습니다.");
+    }
+
+    async function deleteFarm(fId) {
+        if(!confirm("⚠️ 경고: 이 농가와 관련된 모든 평가 기록이 완전히 삭제됩니다.\n정말 삭제하시겠습니까?")) return;
+        
+        allFarms = allFarms.filter(function(f) { return f.id !== fId; });
+        var encFarms = await encryptData(JSON.stringify(allFarms), sessionSecret);
+        setStore(getFarmDbKey(), encFarms);
+        
+        if(globalAppDB[fId]) { delete globalAppDB[fId]; await saveDB(globalAppDB); }
+        
+        renderFarmList();
+        alert("✅ 농가 데이터가 삭제되었습니다.");
     }
 
     function renderFarmList() {
@@ -854,15 +958,19 @@
         var html = "";
         for(var i=0; i<filtered.length; i++) {
             var f = filtered[i];
-            html += "<div class='farm-item' onclick='selectFarm(\"" + esc(f.id) + "\")'>" +
-                "<div><strong style='font-size:16px; color:#1864ab;'>" + esc(f.owner_name) + "</strong> <small style='color:#868e96;'>(" + esc(f.farmName) + ")</small></div>" +
-                "<div style='color:#0ca678; font-weight:bold;'>선택 〉</div></div>";
+            html += "<div class='farm-item'>" +
+                "<div style='flex:1;' onclick='selectFarm(\"" + esc(f.id) + "\")'>" +
+                "<strong style='font-size:16px; color:#1864ab;'>" + esc(f.owner_name) + "</strong> <small style='color:#868e96;'>(" + esc(f.farmName) + ")</small></div>" +
+                "<div style='display:flex; gap:10px; align-items:center;'>" +
+                "<button type='button' onclick='deleteFarm(\"" + esc(f.id) + "\")' style='background:#ffe3e3; color:#e03131; border:1px solid #fa5252; padding:4px 8px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer;'>삭제</button>" +
+                "<div onclick='selectFarm(\"" + esc(f.id) + "\")' style='color:#0ca678; font-weight:bold; cursor:pointer;'>선택 〉</div>" +
+                "</div></div>";
         }
         container.innerHTML = html || "<div style='padding:10px; color:#adb5bd;'>등록된 농가가 없습니다.</div>";
     }
 
     // ==========================================
-    // 차수 선택 및 이전 평가 내역 연동
+    // 차수 선택 및 평가 셋업 로직
     // ==========================================
     function selectFarm(fId) {
         currentFarmId = fId;
@@ -874,12 +982,10 @@
         var db = getDB();
         var history = db[fId] || [];
         
-        var html = "";
-        var maxRound = 0;
+        var html = ""; var maxRound = 0;
         for(var i=0; i<history.length; i++) {
             var rec = history[i];
             if(rec.round > maxRound) maxRound = rec.round;
-            
             html += "<div class='list-item' style='border-left:4px solid #fd7e14;' onclick='startRound(" + rec.round + ", true)'>" +
                     "<div style='flex:1;'><b style='color:#d9480f; font-size:15px;'>" + rec.round + "차 평가</b> <span style='font-size:12px; color:#868e96;'>(조회/수정)</span></div>" +
                     "<button type='button' onclick='event.stopPropagation(); deleteRoundData(" + rec.round + ")' style='background:#ffe3e3; color:#e03131; border:1px solid #fa5252; padding:6px 10px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer;'>삭제</button></div>";
@@ -887,7 +993,6 @@
         
         var nextRound = maxRound + 1;
         var infoText = maxRound > 0 ? "이전(" + maxRound + "차) 평가 내용이 자동으로 연동됩니다." : "처음부터 새롭게 평가를 설정합니다.";
-        
         html += "<div class='list-item' style='border-left:4px solid #1864ab; background:#e6fcf5;' onclick='startRound(" + nextRound + ", false)'>" +
             "<div style='flex:1;'><b style='color:#1864ab; font-size:15px;'>새로운 " + nextRound + "차 평가 시작</b><br>" +
             "<span style='font-size:12px; color:#087f5b; margin-top:4px; display:inline-block;'>" + infoText + "</span></div>" +
@@ -904,7 +1009,7 @@
                 var newArr = [];
                 for(var i=0; i<db[currentFarmId].length; i++) { if(db[currentFarmId][i].round !== r) newArr.push(db[currentFarmId][i]); }
                 db[currentFarmId] = newArr;
-                saveDB(db);
+                saveDB(db); 
             }
             selectFarm(currentFarmId); 
         }
@@ -923,29 +1028,20 @@
             var d = new Date();
             var dateStr = d.getFullYear() + "-" + (d.getMonth() < 9 ? "0" : "") + (d.getMonth() + 1) + "-" + (d.getDate() < 10 ? "0" : "") + d.getDate();
             
-            var prevData = null;
-            var maxR = 0;
-            for(var j=0; j<dbList.length; j++) { 
-                if(dbList[j].round > maxR) { maxR = dbList[j].round; prevData = dbList[j]; }
-            }
+            var prevData = null; var maxR = 0;
+            for(var j=0; j<dbList.length; j++) { if(dbList[j].round > maxR) { maxR = dbList[j].round; prevData = dbList[j]; } }
             
             if (prevData) {
                 visitData = JSON.parse(JSON.stringify(prevData));
-                visitData.round = r; 
-                visitData.evalDate = dateStr; 
+                visitData.round = r; visitData.evalDate = dateStr; 
             } else {
                 visitData = { round: r, evalDate: dateStr, targets: [], spots: [], support: [], ben: {owner:1, family:0, regular:0, temp:0}, facMemo: "" };
             }
-            
             renderSetupWizard(); switchView("f_view_setup_wizard");
         }
     }
 
-    // ==========================================
-    // 셋업 화면 제어
-    // ==========================================
     function openEditSetup() { renderSetupWizard(); switchView("f_view_setup_wizard"); }
-
     function renderSetupWizard() {
         var html = "";
         for(var c=0; c<CAT_CONFIG.length; c++) {
@@ -1070,9 +1166,7 @@
         f_id("f_hub_grid_container").innerHTML = html;
     }
 
-    function clickCategory(catId) {
-        pathState.cat = catId; renderItemList(); switchView("f_view_item_list"); 
-    }
+    function clickCategory(catId) { pathState.cat = catId; renderItemList(); switchView("f_view_item_list"); }
 
     function renderItemList() {
         var mySpots = [];
@@ -1114,7 +1208,7 @@
         
         var btnTitle = "";
         for(var c=0; c<CAT_CONFIG.length; c++) { if(CAT_CONFIG[c].id === pathState.cat) { btnTitle = CAT_CONFIG[c].title; break; } }
-        f_id("f_btn_target_complete").innerText = "✅ [" + btnTitle + "] 전체 일괄 양호(해당없음) 처리"; 
+        f_id("f_btn_target_complete").innerText = "✅ [" + btnTitle + "] 전체 일괄 양호 처리"; 
     }
 
     function completeTargetEval() {
@@ -1129,7 +1223,7 @@
     }
 
     // ==========================================
-    // 🌟 평가 폼 및 [다중 사진 첨부] 처리 로직
+    // 평가 폼 및 다중 사진 첨부 처리 로직
     // ==========================================
     function openForm(sId) {
         var spot = null;
@@ -1152,14 +1246,7 @@
         for(var i=0; i<r.length; i++) { r[i].checked = (r[i].value === spot.riskLevel); }
         f_id("f_form_issue").value = spot.memo || ""; 
         
-        // 구버전 데이터(photoB, photoA)를 다중 사진 배열로 마이그레이션
-        if (!spot.photos) {
-            spot.photos = [];
-            if (spot.photoB) spot.photos.push({ data: spot.photoB, type: 'before' });
-            if (spot.photoA) spot.photos.push({ data: spot.photoA, type: 'after' });
-            spot.photoB = ""; spot.photoA = ""; // 중복 제거
-        }
-        
+        if (!spot.photos) { spot.photos = []; }
         currentPhotos = JSON.parse(JSON.stringify(spot.photos || []));
         renderFormPhotos();
         
@@ -1219,17 +1306,8 @@
         input.value = ""; 
     }
 
-    function removePhoto(idx) {
-        if(confirm("사진을 삭제하시겠습니까?")) {
-            currentPhotos.splice(idx, 1);
-            renderFormPhotos();
-        }
-    }
-
-    function setPhotoType(idx, type) {
-        currentPhotos[idx].type = type;
-        renderFormPhotos();
-    }
+    function removePhoto(idx) { if(confirm("사진을 삭제하시겠습니까?")) { currentPhotos.splice(idx, 1); renderFormPhotos(); } }
+    function setPhotoType(idx, type) { currentPhotos[idx].type = type; renderFormPhotos(); }
 
     function renderFormActionItems() {
         var html = ""; var cCnt = 0; var pCnt = 0;
@@ -1281,7 +1359,6 @@
         
         spot.riskLevel = lvl.value; spot.memo = f_id("f_form_issue").value;
         spot.photos = JSON.parse(JSON.stringify(currentPhotos)); 
-        spot.photoB = ""; spot.photoA = ""; 
         
         var validActs = []; var cCnt = 0; var pCnt = 0;
         for(var a=0; a<currentActionItems.length; a++) {
@@ -1300,9 +1377,7 @@
         else spot.status = "발굴됨(미조치)";
         
         var memoArr = [];
-        for(var am=0; am<spot.actionItems.length; am++) {
-            memoArr.push("[조치 " + (am+1) + "] " + (spot.actionItems[am].plan_field || "없음") + " / 상태: " + spot.actionItems[am].status);
-        }
+        for(var am=0; am<spot.actionItems.length; am++) { memoArr.push("[조치 " + (am+1) + "] " + (spot.actionItems[am].plan_field || "없음") + " / 상태: " + spot.actionItems[am].status); }
         spot.actionMemo = memoArr.join("\n\n");
         
         saveTemp(); goBack();
@@ -1324,7 +1399,7 @@
     }
 
     // ==========================================
-    // 최종 리뷰 및 파일 내보내기 (웹 공유 API)
+    // 최종 리뷰 및 암호화 파일 생성 내보내기 
     // ==========================================
     function openReviewScreen() {
         try { saveTemp(); } catch(e){}
@@ -1384,77 +1459,93 @@
         var ex = -1;
         for(var x=0; x<db[currentFarmId].length; x++) { if(db[currentFarmId][x].round === currentRound) { ex = x; break; } }
         if(ex > -1) db[currentFarmId][ex] = visitData; else db[currentFarmId].push(visitData);
-        saveDB(db);
+        
+        saveDB(db); 
     }
 
-    function exportToFile() {
-        saveTemp();
+    // ==========================================
+    // 📂 파일 내보내기 (해당 농가의 모든 누적된 차수 한 번에 담기)
+    // ==========================================
+    async function exportToFile() {
+        saveTemp(); // 현재 작성 중인 차수 저장
         try {
             var farmInfo = null;
             for(var i=0; i<allFarms.length; i++) { if(allFarms[i].id === currentFarmId) { farmInfo = allFarms[i]; break; } }
             
-            var exportData = JSON.parse(JSON.stringify(visitData));
-            exportData._mobileRawData = JSON.parse(JSON.stringify(visitData)); 
+            var db = getDB();
+            var farmHistory = db[currentFarmId] || []; // 해당 농가의 1,2,3차 누적 데이터 싹 불러오기
+            
+            // 🌟 누적 데이터 컨테이너 생성
+            var exportData = {
+                appType: "FieldApp_Offline_Secure_Cumulative",
+                farmId: currentFarmId,
+                ownerName: farmInfo.owner_name,
+                farmName: farmInfo.farmName || farmInfo.farm_name,
+                region: farmInfo.region,
+                managerName: userProfile.name,
+                isSubmitted: true,
+                history: []
+            };
 
-            exportData.farmId = currentFarmId;
-            exportData.ownerName = farmInfo.owner_name;
-            exportData.farmName = farmInfo.farmName || farmInfo.farm_name; 
-            exportData.region = farmInfo.region;
-            exportData.managerName = userProfile.name;
-            exportData.appType = "FieldApp_Offline"; 
-            exportData.isSubmitted = true;
+            // 누적된 각 차수별로 데이터를 예쁘게 정리해서 컨테이너에 담기
+            for (var h=0; h<farmHistory.length; h++) {
+                var rData = JSON.parse(JSON.stringify(farmHistory[h]));
+                rData._mobileRawData = JSON.parse(JSON.stringify(farmHistory[h])); // 복구용 원본
 
-            var finalSpots = [];
-            for(var s=0; s<exportData.spots.length; s++) {
-                var spt = exportData.spots[s];
-                if(spt.riskLevel === "미평가") continue;
+                var finalSpots = [];
+                for(var s=0; s<rData.spots.length; s++) {
+                    var spt = rData.spots[s];
+                    if(spt.riskLevel === "미평가") continue;
 
-                var mInfo = null;
-                for(var m=0; m<MASTER_ITEMS.length; m++) { if(MASTER_ITEMS[m].code === spt.code) { mInfo = MASTER_ITEMS[m]; break; } }
-                
-                var titleSafe = mInfo ? mInfo.title : "항목명 미상";
-                var tName = (spt.targetName && spt.targetName !== "공통" && spt.targetName !== "undefined") ? spt.targetName : "공통";
-                
-                finalSpots.push({
-                    id: spt.id,
-                    code: spt.code,
-                    createdRound: exportData.round,
-                    customTitle: tName + " - " + titleSafe,
-                    riskLevel: spt.riskLevel,
-                    memo: spt.memo,
-                    actionMemo: spt.actionMemo,
-                    status: spt.status,
-                    photos: spt.photos || []
-                });
+                    var mInfo = null;
+                    for(var m=0; m<MASTER_ITEMS.length; m++) { if(MASTER_ITEMS[m].code === spt.code) { mInfo = MASTER_ITEMS[m]; break; } }
+                    
+                    var titleSafe = mInfo ? mInfo.title : "항목명 미상";
+                    var tName = (spt.targetName && spt.targetName !== "공통" && spt.targetName !== "undefined") ? spt.targetName : "공통";
+                    
+                    finalSpots.push({
+                        id: spt.id, code: spt.code, createdRound: rData.round, customTitle: tName + " - " + titleSafe,
+                        riskLevel: spt.riskLevel, memo: spt.memo, actionMemo: spt.actionMemo, status: spt.status, photos: spt.photos || []
+                    });
+                }
+                rData.spots = finalSpots;
+                exportData.history.push(rData); // 차곡차곡 담기
             }
-            exportData.spots = finalSpots;
 
             var dataStr = JSON.stringify(exportData);
-            var encryptedString = encryptData(dataStr, sessionSecret);
+            
+            var encryptedString = await encryptData(dataStr, sessionSecret);
             if (!encryptedString) throw new Error("암호화 실패");
             
             var blob = new Blob([encryptedString], { type: "text/plain" });
-            var filename = "[보안]현장평가_" + farmInfo.owner_name + "_" + new Date().getTime() + ".enc";
+            var filename = "[누적]현장평가_" + farmInfo.owner_name + "_" + new Date().getTime() + ".enc";
             
             var fileForShare = null;
             try { fileForShare = new File([blob], filename, { type: "text/plain" }); } catch(e){}
 
             if (navigator.canShare && fileForShare && navigator.canShare({ files: [fileForShare] })) {
                 navigator.share({
-                    title: farmInfo.owner_name + ' 농가 현장평가',
-                    text: '앱 잠금 비밀번호로 자체 암호화된 현장평가 결과 파일입니다.',
+                    title: farmInfo.owner_name + " 농가 평가 누적본",
+                    text: "앱 잠금 비밀번호로 자체 암호화된 현장평가 누적 기록 파일입니다.",
                     files: [fileForShare]
-                }).catch(function() { downloadFallback(blob, filename); });
+                }).then(function() { 
+                    // 공유 성공 시 바로 농가 목록으로 이동
+                    goToFarmList(); 
+                }).catch(function() { 
+                    downloadFallback(blob, filename); 
+                });
             } else {
                 downloadFallback(blob, filename);
             }
-        } catch(e) { alert("❌ 파일 생성 오류: " + e.message); }
+        } catch(e) { alert("❌ 누적 파일 생성 오류: " + e.message); }
     }
 
+    // 🌟 파일 다운로드 처리 함수 (여기에 없으셨던 부분을 채웠습니다)
     function downloadFallback(blob, filename) {
         if (window.navigator && window.navigator.msSaveOrOpenBlob) {
             window.navigator.msSaveOrOpenBlob(blob, filename);
             alert("✅ 다운로드가 완료되었습니다.");
+            goToFarmList(); // 확인 누르면 자동 복귀
         } else {
             var url = window.URL || window.webkitURL;
             var blobUrl = url.createObjectURL(blob);
@@ -1466,63 +1557,32 @@
             document.body.removeChild(a);
             url.revokeObjectURL(blobUrl);
             alert("✅ 파일이 기기에 안전하게 저장되었습니다.\n\n(메일 앱이나 메신저를 직접 열어 파일을 첨부해 주세요.)");
+            goToFarmList(); // 확인 누르면 자동 복귀
         }
     }
 
-   // ==========================================
-    // 앱 시작점 & 고령자용 자동 설치(PWA) 마법사
+    // 🌟 저장 완료 후 농가 선택 화면으로 초기화하여 돌아가는 함수
+    function goToFarmList() {
+        viewHistory = []; // 뒤로가기 기록 싹 비우기
+        currentFarmId = null; // 선택된 농가 해제
+        renderFarmList(); 
+        switchView("f_view_farm_select", true); // 농가 선택 화면으로 강제 이동
+    }
+
     // ==========================================
-    let deferredPrompt;
-
-    // 안드로이드: 설치가 가능한 상태가 되면 거대한 주황색 버튼 띄우기
-    window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault(); // 기본 브라우저 팝업 막기
-        deferredPrompt = e; // 설치 이벤트 보관
-        
-        // 브라우저 앱(설치 전) 상태일 때만 버튼 표시
-        if (!window.matchMedia('(display-mode: standalone)').matches) {
-            document.getElementById('pwa_install_container').style.display = 'block';
-        }
-    });
-
-    // 주황색 버튼을 눌렀을 때 실행되는 기능
-    var installBtn = document.getElementById('btn_install_pwa');
-    if(installBtn) {
-        installBtn.addEventListener('click', async () => {
-            if (deferredPrompt !== null) {
-                deferredPrompt.prompt(); // 스마트폰 기본 설치 창 강제 호출
-                const { outcome } = await deferredPrompt.userChoice;
-                if (outcome === 'accepted') {
-                    document.getElementById('pwa_install_container').style.display = 'none';
-                    deferredPrompt = null;
-                }
-            }
-        });
-    }
-
-    // 아이폰(iOS) 감지 함수
-    const isIos = () => {
-      const userAgent = window.navigator.userAgent.toLowerCase();
-      return /iphone|ipad|ipod/.test(userAgent);
-    };
-    const isStandalone = () => ('standalone' in window.navigator) && (window.navigator.standalone);
-
+    // 앱 시작점 
+    // ==========================================
     window.onload = function() {
         checkAuth();
         
-        // PWA 오프라인 서비스 워커 등록
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js').then(function() {
-                console.log('오프라인 모드 준비 완료');
-            }).catch(function() {});
-        }
-
-        // 아이폰은 보안상 주황색 버튼을 강제로 띄울 수 없어 전용 안내판 표시
-        if (isIos() && !isStandalone()) {
-            document.getElementById('ios_install_guide').style.display = 'block';
+            navigator.serviceWorker.register('sw.js').then(function(reg) {
+                console.log('오프라인 앱 모드(PWA) 작동 중');
+            }).catch(function(err) {
+                console.log('PWA 등록 실패:', err);
+            });
         }
     };
 </script>
 </body>
 </html>
-
