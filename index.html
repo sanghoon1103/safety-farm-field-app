@@ -324,8 +324,7 @@
 
         <div class="card" style="border: 2px solid #0ca678; background: #e6fcf5;">
             <h3 style="margin:0 0 10px 0; color:#087f5b;">📝 신규 농가 등록</h3>
-            <input type="text" id="new_owner_name" placeholder="경영주 이름 (필수)" style="margin-bottom:8px;">
-            <input type="text" id="new_farm_name" placeholder="농가명 (선택사항)" style="margin-bottom:8px;">
+            <input type="text" id="new_owner_name" placeholder="농가(경영주)명 입력 (필수)" style="margin-bottom:8px;">
             <input type="text" id="new_region_name" disabled style="margin-bottom:8px; background:#e9ecef; font-weight:bold;">
             <button type="button" onclick="addNewFarm()" style="width:100%; padding:12px; background:#0ca678; color:white; border:none; border-radius:8px; font-weight:bold; font-size:15px;">➕ 등록 및 목록에 추가</button>
         </div>
@@ -917,8 +916,9 @@
     // ==========================================
     async function addNewFarm() {
         var owner = f_id("new_owner_name").value.trim();
-        var farmName = f_id("new_farm_name").value.trim();
-        if(!owner) return alert("경영주 이름은 필수입니다.");
+        // farmName 입력칸을 없앴으므로 빈 문자열로 처리하여 에러 방지
+        var farmName = ""; 
+        if(!owner) return alert("농가(경영주)명을 입력해주세요.");
         
         var newId = "farm_" + new Date().getTime();
         allFarms.push({ id: newId, owner_name: owner, farmName: farmName, region: userProfile.region });
@@ -958,9 +958,12 @@
         var html = "";
         for(var i=0; i<filtered.length; i++) {
             var f = filtered[i];
+            // 농가명이 있을 때만 괄호를 표시하도록 설정 (기존 데이터 호환)
+            var dispFarmName = f.farmName ? " <small style='color:#868e96;'>(" + esc(f.farmName) + ")</small>" : "";
+            
             html += "<div class='farm-item'>" +
                 "<div style='flex:1;' onclick='selectFarm(\"" + esc(f.id) + "\")'>" +
-                "<strong style='font-size:16px; color:#1864ab;'>" + esc(f.owner_name) + "</strong> <small style='color:#868e96;'>(" + esc(f.farmName) + ")</small></div>" +
+                "<strong style='font-size:16px; color:#1864ab;'>" + esc(f.owner_name) + "</strong>" + dispFarmName + "</div>" +
                 "<div style='display:flex; gap:10px; align-items:center;'>" +
                 "<button type='button' onclick='deleteFarm(\"" + esc(f.id) + "\")' style='background:#ffe3e3; color:#e03131; border:1px solid #fa5252; padding:4px 8px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer;'>삭제</button>" +
                 "<div onclick='selectFarm(\"" + esc(f.id) + "\")' style='color:#0ca678; font-weight:bold; cursor:pointer;'>선택 〉</div>" +
