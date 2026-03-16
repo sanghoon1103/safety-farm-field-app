@@ -1517,11 +1517,13 @@
             var encryptedString = await encryptData(dataStr, sessionSecret);
             if (!encryptedString) throw new Error("암호화 실패");
             
-            var blob = new Blob([encryptedString], { type: "text/plain" });
+            // 💡 "text/plain"을 "application/octet-stream"으로 변경
+            var blob = new Blob([encryptedString], { type: "application/octet-stream" });
             var filename = "[누적]현장평가_" + farmInfo.owner_name + "_" + new Date().getTime() + ".enc";
             
             var fileForShare = null;
-            try { fileForShare = new File([blob], filename, { type: "text/plain" }); } catch(e){}
+            // 💡 여기도 "application/octet-stream"으로 변경
+            try { fileForShare = new File([blob], filename, { type: "application/octet-stream" }); } catch(e){}
 
             if (navigator.canShare && fileForShare && navigator.canShare({ files: [fileForShare] })) {
                 navigator.share({
