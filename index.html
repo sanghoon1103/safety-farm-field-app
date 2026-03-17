@@ -1547,23 +1547,55 @@
 
     // 🌟 파일 다운로드 처리 함수 (여기에 없으셨던 부분을 채웠습니다)
     function downloadFallback(blob, filename) {
-        if (window.navigator && window.navigator.msSaveOrOpenBlob) {
-            window.navigator.msSaveOrOpenBlob(blob, filename);
-            alert("✅ 다운로드가 완료되었습니다.");
-            goToFarmList(); // 확인 누르면 자동 복귀
-        } else {
-            var url = window.URL || window.webkitURL;
-            var blobUrl = url.createObjectURL(blob);
-            var a = document.createElement("a");
-            a.href = blobUrl;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            url.revokeObjectURL(blobUrl);
-            alert("✅ 파일이 기기에 안전하게 저장되었습니다.\n\n(메일 앱이나 메신저를 직접 열어 파일을 첨부해 주세요.)");
-            goToFarmList(); // 확인 누르면 자동 복귀
-        }
+        var url = window.URL || window.webkitURL;
+        var blobUrl = url.createObjectURL(blob);
+
+        // 1차 시도: 기존의 자동 다운로드 방식 (PC 및 일부 안드로이드에서는 정상 작동함)
+        var a = document.createElement("a");
+        a.href = blobUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+        // 2차 방어: 기기가 자동 다운로드를 무시했을 경우를 대비해 수동 다운로드 화면을 띄움
+        setTimeout(function() {
+            var modal = document.createElement("div");
+            modal.style.position = "fixed";
+            modal.style.top = "0"; modal.style.left = "0"; modal.style.width = "100%"; modal.style.height = "100%";
+            modal.style.background = "rgba(0,0,0,0.85)"; modal.style.zIndex = "9999";
+            modal.style.display = "flex"; modal.style.flexDirection = "column"; modal.style.justifyContent = "center"; modal.style.alignItems = "center"; modal.style.padding = "20px";
+
+            var box = document.createElement("div");
+            box.style.background = "#fff"; box.style.padding = "30px"; box.style.borderRadius = "12px"; box.style.textAlign = "center"; box.style.width = "100%"; box.style.maxWidth = "400px";
+
+            var title = document.createElement("h3");
+            title.style.margin = "0 0 15px 0"; title.style.color = "#e03131"; title.innerText = "⚠️ 파일 저장 확인";
+
+            var desc = document.createElement("p");
+            desc.style.fontSize = "14px"; desc.style.color = "#495057"; desc.style.marginBottom = "25px"; desc.style.lineHeight = "1.5";
+            desc.innerHTML = "기기 보안 정책으로 인해 자동 저장이 안 될 수 있습니다.<br>저장 알림이 없었다면 아래 <u>[수동 다운로드]</u> 버튼을 직접 눌러주세요.";
+
+            var btn = document.createElement("a");
+            btn.href = blobUrl;
+            btn.download = filename;
+            btn.innerText = "📥 여기를 눌러 수동으로 파일 다운로드";
+            btn.style.display = "block"; btn.style.background = "#0ca678"; btn.style.color = "white"; btn.style.padding = "16px"; btn.style.borderRadius = "8px"; btn.style.fontWeight = "bold"; btn.style.textDecoration = "none"; btn.style.marginBottom = "15px";
+
+            var closeBtn = document.createElement("button");
+            closeBtn.innerText = "저장 완료 (홈으로 돌아가기)";
+            closeBtn.style.background = "#f1f3f5"; closeBtn.style.border = "1px solid #ced4da"; closeBtn.style.color = "#495057"; closeBtn.style.padding = "12px"; closeBtn.style.borderRadius = "8px"; closeBtn.style.width = "100%"; closeBtn.style.fontWeight = "bold"; closeBtn.style.cursor = "pointer";
+            
+            closeBtn.onclick = function() {
+                document.body.removeChild(modal);
+                window.URL.revokeObjectURL(blobUrl);
+                goToFarmList();
+            };
+
+            box.appendChild(title); box.appendChild(desc); box.appendChild(btn); box.appendChild(closeBtn);
+            modal.appendChild(box);
+            document.body.appendChild(modal);
+        }, 800);
     }
 
     // 🌟 저장 완료 후 농가 선택 화면으로 초기화하여 돌아가는 함수
@@ -1577,14 +1609,19 @@
     // ==========================================
     // 앱 시작점 
     // ==========================================
-    window.onload = function() {
+   window.onload = function() {
+        var ua = navigator.userAgent.toLowerCase();
+        if (ua.indexOf("kakao") > -1 || ua.indexOf("naver") > -1 || ua.indexOf("line") > -1) {
+            alert("🚨 경고: 현재 카카오톡/네이버 앱 내부 브라우저로 접속하셨습니다.\n이 환경에서는 평가 결과 파일 저장이 불가능합니다.\n\n화면 우측 상단 메뉴를 눌러 반드시 [다른 브라우저로 열기]를 선택한 후 사용해 주세요.");
+        }
+
         checkAuth();
         
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js').then(function(reg) {
-                console.log('오프라인 앱 모드(PWA) 작동 중');
+        if ("serviceWorker" in navigator) {
+            navigator.serviceWorker.register("sw.js").then(function(reg) {
+                console.log("오프라인 앱 모드(PWA) 작동 중");
             }).catch(function(err) {
-                console.log('PWA 등록 실패:', err);
+                console.log("PWA 등록 실패:", err);
             });
         }
     };
