@@ -1466,7 +1466,7 @@
         saveDB(db); 
     }
 
-    // ==========================================
+   // ==========================================
     // 📂 파일 내보내기 (해당 농가의 모든 누적된 차수 한 번에 담기)
     // ==========================================
     async function exportToFile() {
@@ -1520,12 +1520,11 @@
             var encryptedString = await encryptData(dataStr, sessionSecret);
             if (!encryptedString) throw new Error("암호화 실패");
             
-            // 💡 "text/plain"을 "application/octet-stream"으로 변경
+            // 🚨 [복구 완료] PC 프로그램 및 앱 불러오기 호환성을 위해 문자열 그대로 Blob에 담습니다.
             var blob = new Blob([encryptedString], { type: "application/octet-stream" });
             var filename = "[누적]현장평가_" + farmInfo.owner_name + "_" + new Date().getTime() + ".enc";
             
             var fileForShare = null;
-            // 💡 여기도 "application/octet-stream"으로 변경
             try { fileForShare = new File([blob], filename, { type: "application/octet-stream" }); } catch(e){}
 
             if (navigator.canShare && fileForShare && navigator.canShare({ files: [fileForShare] })) {
