@@ -1,4 +1,4 @@
-const CACHE_NAME = 'field-app-v1';
+const CACHE_NAME = 'field-app-v2';
 // 인터넷 없이도 켜지도록 기기에 미리 저장(캐싱)해둘 파일 목록
 const FILES_TO_CACHE = [
     './',
