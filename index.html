@@ -1466,8 +1466,8 @@
         saveDB(db); 
     }
 
-    // ==========================================
-    // 📂 파일 내보내기 (해당 농가의 모든 누적된 차수 한 번에 담기)
+   // ==========================================
+    // 📂 파일 내보내기 (PC 프로그램과 100% 호환되는 오리지널 방식)
     // ==========================================
     async function exportToFile() {
         saveTemp(); // 현재 작성 중인 차수 저장
@@ -1520,12 +1520,12 @@
             var encryptedString = await encryptData(dataStr, sessionSecret);
             if (!encryptedString) throw new Error("암호화 실패");
             
-            // 💡 "text/plain"을 "application/octet-stream"으로 변경
+            // 🚨 [가장 중요한 핵심] 기계어 변환을 하지 않고, 예전처럼 encryptedString을 그대로 씁니다!
+            // 그래야 기존의 수정되지 않은 사무실 PC 프로그램이 완벽하게 읽고 병합할 수 있습니다.
             var blob = new Blob([encryptedString], { type: "application/octet-stream" });
             var filename = "[누적]현장평가_" + farmInfo.owner_name + "_" + new Date().getTime() + ".enc";
             
             var fileForShare = null;
-            // 💡 여기도 "application/octet-stream"으로 변경
             try { fileForShare = new File([blob], filename, { type: "application/octet-stream" }); } catch(e){}
 
             if (navigator.canShare && fileForShare && navigator.canShare({ files: [fileForShare] })) {
@@ -1534,7 +1534,6 @@
                     text: "앱 잠금 비밀번호로 자체 암호화된 현장평가 누적 기록 파일입니다.",
                     files: [fileForShare]
                 }).then(function() { 
-                    // 공유 성공 시 바로 농가 목록으로 이동
                     goToFarmList(); 
                 }).catch(function() { 
                     downloadFallback(blob, filename); 
