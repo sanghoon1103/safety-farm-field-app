@@ -1466,7 +1466,7 @@
         saveDB(db); 
     }
 
-   // ==========================================
+    // ==========================================
     // 📂 파일 내보내기 (해당 농가의 모든 누적된 차수 한 번에 담기)
     // ==========================================
     async function exportToFile() {
@@ -1520,11 +1520,12 @@
             var encryptedString = await encryptData(dataStr, sessionSecret);
             if (!encryptedString) throw new Error("암호화 실패");
             
-            // 🚨 [복구 완료] PC 프로그램 및 앱 불러오기 호환성을 위해 문자열 그대로 Blob에 담습니다.
+            // 💡 "text/plain"을 "application/octet-stream"으로 변경
             var blob = new Blob([encryptedString], { type: "application/octet-stream" });
             var filename = "[누적]현장평가_" + farmInfo.owner_name + "_" + new Date().getTime() + ".enc";
             
             var fileForShare = null;
+            // 💡 여기도 "application/octet-stream"으로 변경
             try { fileForShare = new File([blob], filename, { type: "application/octet-stream" }); } catch(e){}
 
             if (navigator.canShare && fileForShare && navigator.canShare({ files: [fileForShare] })) {
@@ -1549,7 +1550,6 @@
         var url = window.URL || window.webkitURL;
         var blobUrl = url.createObjectURL(blob);
 
-        // 1차 시도: 기존의 자동 다운로드 방식 (PC 및 일부 안드로이드에서는 정상 작동함)
         var a = document.createElement("a");
         a.href = blobUrl;
         a.download = filename;
@@ -1557,7 +1557,6 @@
         a.click();
         document.body.removeChild(a);
 
-        // 2차 방어: 기기가 자동 다운로드를 무시했을 경우를 대비해 수동 다운로드 화면을 띄움
         setTimeout(function() {
             var modal = document.createElement("div");
             modal.style.position = "fixed";
@@ -1608,7 +1607,7 @@
     // ==========================================
     // 앱 시작점 
     // ==========================================
-   window.onload = function() {
+    window.onload = function() {
         var ua = navigator.userAgent.toLowerCase();
         if (ua.indexOf("kakao") > -1 || ua.indexOf("naver") > -1 || ua.indexOf("line") > -1) {
             alert("🚨 경고: 현재 카카오톡/네이버 앱 내부 브라우저로 접속하셨습니다.\n이 환경에서는 평가 결과 파일 저장이 불가능합니다.\n\n화면 우측 상단 메뉴를 눌러 반드시 [다른 브라우저로 열기]를 선택한 후 사용해 주세요.");
