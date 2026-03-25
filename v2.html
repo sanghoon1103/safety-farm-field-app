@@ -1630,6 +1630,27 @@ async function showMobileDB() {
     }
 }
 
+    // 📏 현재 브라우저 저장소 용량 현황을 계산해서 알려주는 마법의 코드
+async function checkStorageQuota() {
+    if (navigator.storage && navigator.storage.estimate) {
+        const estimate = await navigator.storage.estimate();
+        
+        // 1. 전체 허용 용량 (보통 기기 용량의 절반 정도)
+        const totalQuota = (estimate.quota / (1024 * 1024 * 1024)).toFixed(2); 
+        // 2. 현재 우리 앱이 사용 중인 용량 (농가 데이터 + 사진 합계)
+        const usedSpace = (estimate.usage / (1024 * 1024)).toFixed(2);
+        // 3. 사용률 (%)
+        const percent = ((estimate.usage / estimate.quota) * 100).toFixed(4);
+
+        alert(`📦 [저장소 상태 보고서]\n\n` +
+              `✅ 현재 사용량: ${usedSpace} MB\n` +
+              `✅ 전체 한도: ${totalQuota} GB\n` +
+              `✅ 창고 점유율: ${percent}%\n\n` +
+              `💡 결론: 아직 공간이 무지무지 많이 남았습니다!`);
+    } else {
+        alert("이 브라우저에서는 용량 상세 확인 기능을 지원하지 않습니다.");
+    }
+}
     // ==========================================
     // 앱 시작점 
     // ==========================================
