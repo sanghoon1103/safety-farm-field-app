@@ -1605,52 +1605,64 @@
         switchView("f_view_farm_select", true); // 농가 선택 화면으로 강제 이동
     }
 
-    // 📱 모바일에서 기기 내부의 대용량 창고(localforage)를 강제로 열어보는 함수
-async function showMobileDB() {
-    if(!sessionSecret) return alert("로그인이 필요합니다.");
+  async function showMobileStatus() {
+        if (!sessionSecret) return alert("로그인이 필요합니다.");
 
-    try {
-        var encFarms = await localforage.getItem(getFarmDbKey());
-        var decFarms = encFarms ? await decryptData(encFarms, sessionSecret) : "데이터 없음";
-        
-        var encDB = await localforage.getItem(getTempDbKey());
-        var decDB = encDB ? await decryptData(encDB, sessionSecret) : "데이터 없음";
+        try {
+            // 1. 용량 계산 (Quota API)
+            let storageInfo = "용량 정보를 가져올 수 없는 브라우저입니다.";
+            if (navigator.storage && navigator.storage.estimate) {
+                const estimate = await navigator.storage.estimate();
+                const totalGB = (estimate.quota / (1024 * 1024 * 1024)).toFixed(2);
+                const usedMB = (estimate.usage / (1024 * 1024)).toFixed(2);
+                const percent = ((estimate.usage / estimate.quota) * 100).toFixed(4);
+                storageInfo = `📦 [저장소 상태]\n- 사용 중: ${usedMB} MB\n- 전체 한도: ${totalGB} GB\n- 사용률: ${percent}%`;
+            }
 
-        // 화면을 덮는 큰 창을 만들어서 데이터를 텍스트로 뿌려줍니다.
-        var w = window.open("", "_blank");
-        w.document.write("<title>📱 모바일 DB 확인</title>");
-        w.document.write("<body style='font-family:sans-serif; background:#f4f6f8; padding:20px;'>");
-        w.document.write("<h2 style='color:#1864ab;'>📂 기기에 저장된 농가 명단</h2>");
-        w.document.write("<textarea style='width:100%; height:150px; font-size:12px;'>" + decFarms + "</textarea>");
-        w.document.write("<h2 style='color:#0ca678;'>📦 기기에 저장된 평가 데이터 (사진 포함)</h2>");
-        w.document.write("<textarea style='width:100%; height:400px; font-size:12px;'>" + decDB + "</textarea>");
-        w.document.write("</body>");
-    } catch(e) {
-        alert("DB를 읽어오는 중 오류가 발생했습니다.");
+            // 2. 데이터 내용 가져오기
+            var encDB = await localforage.getItem(getTempDbKey());
+            var decDB = encDB ? await decryptData(encDB, sessionSecret) : "저장된 데이터가 없습니다.";
+
+            // 3. 결과 알림 및 상세 창 열기
+            alert(storageInfo + "\n\n💡 확인을 누르면 상세 데이터(텍스트) 창이 열립니다.");
+
+            var w = window.open("", "_blank");
+            if (w) {
+                w.document.write("<html><body style='font-family:sans-serif; padding:20px; background:#f4f6f8;'>");
+                w.document.write("<h2 style='color:#1864ab;'>📊 기기 저장소 상세 보고서</h2>");
+                w.document.write("<pre style='background:#fff; padding:10px; border-radius:8px; border:1px solid #ddd;'>" + storageInfo + "</pre>");
+                w.document.write("<h2 style='color:#0ca678;'>📦 실제 저장된 데이터 내용</h2>");
+                w.document.write("<textarea style='width:100%; height:60vh; font-size:12px; border:1px solid #ccc; border-radius:8px; padding:10px;'>" + decDB + "</textarea>");
+                w.document.write("<p style='color:#868e96; font-size:12px;'>※ 위 텍스트가 길게 보인다면 사진 데이터가 정상적으로 저장된 것입니다.</p>");
+                w.document.write("</body></html>");
+            } else {
+                alert("팝업 차단을 해제해 주셔야 상세 내용을 볼 수 있습니다.");
+            }
+        } catch (e) {
+            alert("상태 확인 중 오류 발생: " + e.message);
+        }
     }
-}
 
-    // 📏 현재 브라우저 저장소 용량 현황을 계산해서 알려주는 마법의 코드
-async function checkStorageQuota() {
-    if (navigator.storage && navigator.storage.estimate) {
-        const estimate = await navigator.storage.estimate();
+    // 🔘 화면 우측 하단에 비밀 버튼을 생성하는 함수
+    function injectAdminButton() {
+        // 이미 버튼이 있다면 중복 생성 방지
+        if (document.getElementById("admin-debug-btn")) return;
+
+        var btn = document.createElement("button");
+        btn.id = "admin-debug-btn";
+        btn.innerHTML = "🛠️ 용량/데이터 확인";
+        btn.style.cssText = "position:fixed; bottom:20px; right:20px; z-index:9999; background:#343a40; color:white; border:none; padding:12px; border-radius:8px; font-size:12px; font-weight:bold; opacity:0.6; cursor:pointer; box-shadow:0 4px 10px rgba(0,0,0,0.2);";
         
-        // 1. 전체 허용 용량 (보통 기기 용량의 절반 정도)
-        const totalQuota = (estimate.quota / (1024 * 1024 * 1024)).toFixed(2); 
-        // 2. 현재 우리 앱이 사용 중인 용량 (농가 데이터 + 사진 합계)
-        const usedSpace = (estimate.usage / (1024 * 1024)).toFixed(2);
-        // 3. 사용률 (%)
-        const percent = ((estimate.usage / estimate.quota) * 100).toFixed(4);
-
-        alert(`📦 [저장소 상태 보고서]\n\n` +
-              `✅ 현재 사용량: ${usedSpace} MB\n` +
-              `✅ 전체 한도: ${totalQuota} GB\n` +
-              `✅ 창고 점유율: ${percent}%\n\n` +
-              `💡 결론: 아직 공간이 무지무지 많이 남았습니다!`);
-    } else {
-        alert("이 브라우저에서는 용량 상세 확인 기능을 지원하지 않습니다.");
+        // 버튼 누르면 위에서 만든 통합 함수 실행
+        btn.onclick = showMobileStatus;
+        
+        document.body.appendChild(btn);
     }
-}
+
+    // 앱 실행 후 2초 뒤에 버튼이 나타나게 설정
+    setTimeout(injectAdminButton, 2000);
+
+    
     // ==========================================
     // 앱 시작점 
     // ==========================================
